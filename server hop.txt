@@ -1,0 +1,41 @@
+wait(1)
+
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local PlaceId = game.PlaceId
+local JobId = game.JobId
+
+-- Tabela para armazenar os servidores já visitados
+local visitedServers = {}
+
+local function serverhop()
+    local servers = {}
+    local url = "https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
+    
+    local req = syn and syn.request or request or http_request
+    local response = req({ Url = url, Method = "GET" })
+
+    if response and response.StatusCode == 200 then
+        local body = HttpService:JSONDecode(response.Body)
+        
+        if body and body.data then
+            for _, server in ipairs(body.data) do
+                if server.playing < server.maxPlayers and server.id ~= JobId and not visitedServers[server.id] then
+                    table.insert(servers, server.id)
+                end
+            end
+        end
+        
+        if #servers > 0 then
+            local randomServer = servers[math.random(1, #servers)]
+            visitedServers[randomServer] = true -- Marca o servidor como visitado
+            TeleportService:TeleportToPlaceInstance(PlaceId, randomServer, game.Players.LocalPlayer)
+        else
+            print("No available servers found.")
+        end
+    else
+        print("Failed to retrieve server list.")
+    end
+end
+
+serverhop()
